@@ -1,7 +1,5 @@
 name: Deploy to GitHub Pages
 
-# Builds the static Next.js export and publishes it to GitHub Pages
-# via the gh-pages branch (compatible with GitHub Pages branch source).
 on:
   push:
     branches: ["main"]
@@ -29,8 +27,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Configure GitHub Pages base path
-        run: echo "NEXT_PUBLIC_BASE_PATH=/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
+      - name: Set base path
+        run: echo "NEXT_PUBLIC_BASE_PATH=/anime" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: npm ci
@@ -44,11 +42,8 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
           branch: gh-pages
-          clean: true
-          cleanExclude:
-            - '.nojekyll'
