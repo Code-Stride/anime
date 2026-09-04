@@ -1,27 +1,23 @@
 name: Deploy to GitHub Pages
 
-# Builds the static Next.js export and publishes it to GitHub Pages.
-# For project pages (https://<user>.github.io/<repo>/) NEXT_PUBLIC_BASE_PATH is
-# derived from the repo name; for user/org pages it is left empty.
+# Builds the static Next.js export and publishes it to GitHub Pages
+# via the gh-pages branch (compatible with GitHub Pages branch source).
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
-# Grant the workflow the permissions GitHub Pages needs and an id-token so
-# OIDC can authenticate deployments without a stored PAT.
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-# Allow one concurrent deployment at a time.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,11 +29,6 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Configure GitHub Pages
-        # Enables GitHub Pages (when not already enabled) and switches the
-        # Pages source to GitHub Actions so deploy-pages can publish to it.
-        uses: actions/configure-pages@v5
-
       - name: Configure GitHub Pages base path
         run: echo "NEXT_PUBLIC_BASE_PATH=/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
 
@@ -47,19 +38,17 @@ jobs:
       - name: Build static export
         run: npm run build
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Static export is emitted to ./out by output: 'export'.
-          path: ./out
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          branch: gh-pages
+          clean: true
+          cleanExclude:
+            - '.nojekyll'
