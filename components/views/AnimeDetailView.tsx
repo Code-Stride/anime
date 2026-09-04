@@ -14,6 +14,7 @@ import {
   FilmIcon,
   HeartIcon,
   ShareIcon,
+  StarFilledIcon,
   StarIcon,
 } from "@/components/Icons";
 import {
@@ -171,7 +172,7 @@ export function AnimeDetailView({ id }: { id: string }) {
     <div className="page">
       <div style={{ paddingTop: 16 }}>
         <a className="chip" href={hashHref("/browse")}>
-          <BackIcon width={15} height={15} style={{ verticalAlign: "text-bottom", marginRight: 4 }} />
+          <BackIcon width={15} height={15} />
           Back to browse
         </a>
       </div>
@@ -389,7 +390,13 @@ export function AnimeDetailView({ id }: { id: string }) {
                   <div className="t">{displayTitle(r.mediaRecommendation.title)}</div>
                   <div className="sub">
                     {formatLabel(r.mediaRecommendation.format as never)}
-                    {r.mediaRecommendation.averageScore ? ` · ${scoreLabel(r.mediaRecommendation.averageScore)}★` : ""}
+                    {r.mediaRecommendation.averageScore ? (
+                      <>
+                        {" · "}
+                        {scoreLabel(r.mediaRecommendation.averageScore)}
+                        <StarFilledIcon width={11} height={11} className="score-star" />
+                      </>
+                    ) : ""}
                   </div>
                 </div>
               </a>

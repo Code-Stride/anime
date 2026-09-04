@@ -14,7 +14,7 @@ import {
 import { navigate, useRoute } from "@/lib/router";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { EmptyState, ErrorBox, SkeletonGrid } from "@/components/Skeleton";
-import { FilterIcon, SearchIcon } from "@/components/Icons";
+import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, FilterIcon, SearchIcon } from "@/components/Icons";
 import { formatCount } from "@/lib/format";
 
 type BrowseResult = {
@@ -142,7 +142,7 @@ export function BrowseView() {
           </button>
           {q && (
             <button className="chip" onClick={() => { setSearchText(""); setParam("q", ""); }} title="Clear query">
-              ✕
+              <CloseIcon width={14} height={14} />
             </button>
           )}
         </div>
@@ -233,7 +233,8 @@ export function BrowseView() {
             disabled={page <= 1}
             onClick={() => setParam("page", String(page - 1))}
           >
-            ← Prev
+            <ArrowLeftIcon width={15} height={15} />
+            Prev
           </button>
           <span className="page-info">Page {page}</span>
           <button
@@ -241,7 +242,8 @@ export function BrowseView() {
             disabled={!hasNext}
             onClick={() => setParam("page", String(page + 1))}
           >
-            Next →
+            Next
+            <ArrowRightIcon width={15} height={15} />
           </button>
         </div>
       )}

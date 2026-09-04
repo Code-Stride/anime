@@ -7,7 +7,14 @@ import { hashHref, navigate } from "@/lib/router";
 import { BannerCard } from "@/components/BannerCard";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { BannerLoader, ErrorBox, SkeletonGrid } from "@/components/Skeleton";
-import { CompassIcon, SearchIcon, TrendingIcon } from "@/components/Icons";
+import {
+  ArrowRightIcon,
+  CompassIcon,
+  FireIcon,
+  SearchIcon,
+  StarFilledIcon,
+  TrendingIcon,
+} from "@/components/Icons";
 
 type HomeData = {
   trending: { media: MediaListCard[] };
@@ -83,11 +90,11 @@ export function HomeView() {
         </div>
         <div className="chip-row">
           <a className="chip" href={hashHref("/trending")}>
-            <TrendingIcon width={15} height={15} style={{ verticalAlign: "text-bottom", marginRight: 4 }} />
+            <TrendingIcon width={15} height={15} />
             Trending now
           </a>
           <a className="chip" href={hashHref("/browse")}>
-            <CompassIcon width={15} height={15} style={{ verticalAlign: "text-bottom", marginRight: 4 }} />
+            <CompassIcon width={15} height={15} />
             Browse all
           </a>
         </div>
@@ -96,11 +103,15 @@ export function HomeView() {
       <section className="section">
         <div className="section-head">
           <div>
-            <h2>🔥 Trending this week</h2>
+            <h2>
+              <FireIcon width={20} height={20} className="h2-icon" />
+              Trending this week
+            </h2>
             <div className="sub">What everyone is watching right now</div>
           </div>
           <a className="link-more" href={hashHref("/trending")}>
-            View all →
+            View all
+            <ArrowRightIcon width={15} height={15} />
           </a>
         </div>
         {error ? (
@@ -119,11 +130,15 @@ export function HomeView() {
       <section className="section">
         <div className="section-head">
           <div>
-            <h2>⭐ Top rated</h2>
+            <h2>
+              <StarFilledIcon width={20} height={20} className="h2-icon" />
+              Top rated
+            </h2>
             <div className="sub">The highest-scored anime on AniList</div>
           </div>
           <a className="link-more" href={hashHref("/browse", { sort: "SCORE_DESC" })}>
-            View all →
+            View all
+            <ArrowRightIcon width={15} height={15} />
           </a>
         </div>
         {error ? null : popular.length === 0 ? (
