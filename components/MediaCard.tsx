@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import type { MediaListCard } from "@/lib/anilist";
+import { hashHref } from "@/lib/router";
 import {
   displayTitle,
   episodeLabel,
@@ -22,7 +22,7 @@ export function MediaCard({ anime }: { anime: MediaListCard }) {
   const time = anime.nextAiringEpisode?.timeUntilAiring;
 
   return (
-    <Link href={`/anime/${anime.id}`} className="card">
+    <a href={hashHref(`/anime/${anime.id}`)} className="card">
       <div className="card-cover">
         {cover ? (
           <Image
@@ -71,6 +71,6 @@ export function MediaCard({ anime }: { anime: MediaListCard }) {
           </div>
         )}
       </div>
-    </Link>
+    </a>
   );
 }

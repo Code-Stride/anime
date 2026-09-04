@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import type { MediaListCard } from "@/lib/anilist";
 import { animeql, BROWSE_QUERY } from "@/lib/anilist";
-import { Nav } from "@/components/Nav";
+import { hashHref } from "@/lib/router";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { EmptyState, ErrorBox, SkeletonGrid } from "@/components/Skeleton";
 import { FilterIcon } from "@/components/Icons";
@@ -19,15 +18,17 @@ const GENRES = [
   "Sci-Fi", "Slice of Life", "Sports", "Supernatural", "Thriller",
 ];
 
-export default function Genre() {
-  const params = useParams();
-  const genre = Array.isArray(params.genre) ? params.genre[0] : params.genre;
+export function GenreView({ genre }: { genre: string }) {
   const label = GENRES.find((g) => g.toLowerCase() === genre?.toLowerCase()) || genre;
 
   const [items, setItems] = useState<MediaListCard[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState<number | null>(null);
+
+  useEffect(() => {
+    document.title = `${label} anime · AniVault`;
+  }, [label]);
 
   useEffect(() => {
     if (!genre) return;
@@ -59,8 +60,6 @@ export default function Genre() {
 
   return (
     <div className="page">
-      <Nav />
-
       <div className="page-head">
         <h1>
           <FilterIcon width={24} height={24} style={{ verticalAlign: "-4px", marginRight: 8 }} />
@@ -76,7 +75,7 @@ export default function Genre() {
           <a
             key={g}
             className={`chip${g.toLowerCase() === genre?.toLowerCase() ? " on" : ""}`}
-            href={`/genre/${encodeURIComponent(g)}`}
+            href={hashHref(`/genre/${encodeURIComponent(g)}`)}
           >
             {g}
           </a>

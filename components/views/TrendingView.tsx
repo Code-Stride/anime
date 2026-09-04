@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { MediaListCard } from "@/lib/anilist";
 import { animeql, TRENDING_QUERY } from "@/lib/anilist";
-import { Nav } from "@/components/Nav";
 import { BannerCard } from "@/components/BannerCard";
 import { BannerLoader, ErrorBox } from "@/components/Skeleton";
 import { TrendingIcon } from "@/components/Icons";
@@ -12,10 +11,14 @@ type TrendingData = {
   Page: { media: MediaListCard[]; pageInfo: { hasNextPage: boolean } };
 };
 
-export default function Trending() {
+export function TrendingView() {
   const [items, setItems] = useState<MediaListCard[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = "Trending anime · AniVault";
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -36,8 +39,6 @@ export default function Trending() {
 
   return (
     <div className="page">
-      <Nav />
-
       <div className="page-head">
         <h1>
           <TrendingIcon width={26} height={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />

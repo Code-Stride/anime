@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import type { MediaListCard } from "@/lib/anilist";
+import { hashHref } from "@/lib/router";
 import {
   displayTitle,
   formatLabel,
@@ -16,11 +16,10 @@ export function BannerCard({ anime }: { anime: MediaListCard }) {
   const banner = resolveBanner(anime);
   const cover = resolveCover(anime);
   const label = displayTitle(anime.title);
-  const fmt = formatLabel(anime.format);
   const score = scoreLabel(anime.averageScore);
 
   return (
-    <Link href={`/anime/${anime.id}`} className="banner-card">
+    <a href={hashHref(`/anime/${anime.id}`)} className="banner-card">
       <div className="banner-bg">
         {banner ? (
           <Image
@@ -63,6 +62,6 @@ export function BannerCard({ anime }: { anime: MediaListCard }) {
           </div>
         )}
       </div>
-    </Link>
+    </a>
   );
 }

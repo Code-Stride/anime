@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import type { MediaListCard } from "@/lib/anilist";
 import {
   animeql,
@@ -12,7 +11,7 @@ import {
   SORT_OPTIONS,
   STATUS_OPTIONS,
 } from "@/lib/anilist";
-import { Nav } from "@/components/Nav";
+import { navigate, useRoute } from "@/lib/router";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { EmptyState, ErrorBox, SkeletonGrid } from "@/components/Skeleton";
 import { FilterIcon, SearchIcon } from "@/components/Icons";
@@ -33,23 +32,27 @@ const GENRES = [
 
 const PER_PAGE = 24;
 
-function BrowseInner() {
-  const params = useSearchParams();
+export function BrowseView() {
+  const { query } = useRoute();
 
-  const q = params.get("q") || "";
-  const genre = params.get("genre") || "";
-  const format = params.get("format") || "";
-  const season = params.get("season") || "";
-  const year = params.get("year") || "";
-  const status = params.get("status") || "";
-  const sort = params.get("sort") || "TRENDING_DESC";
+  const q = query.get("q") || "";
+  const genre = query.get("genre") || "";
+  const format = query.get("format") || "";
+  const season = query.get("season") || "";
+  const year = query.get("year") || "";
+  const status = query.get("status") || "";
+  const sort = query.get("sort") || "TRENDING_DESC";
 
   const [results, setResults] = useState<BrowseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(parseInt(params.get("page") || "1", 10));
+  const page = parseInt(query.get("page") || "1", 10);
+  const [searchText, setSearchText] = useState(q);
 
-  // Years available
+  useEffect(() => {
+    document.title = "Browse anime · AniVault";
+  }, []);
+
   const years = useMemo(() => {
     const now = new Date().getFullYear();
     const arr: number[] = [];
@@ -82,17 +85,17 @@ function BrowseInner() {
   }
 
   useEffect(() => {
-    setPage(Math.max(1, parseInt(params.get("page") || "1", 10)));
-    fetchPage(parseInt(params.get("page") || "1", 10));
+    setSearchText(q);
+    fetchPage(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, genre, format, season, year, status, sort]);
+  }, [q, genre, format, season, year, status, sort, page]);
 
   function setParam(key: string, value: string) {
-    const url = new URL(window.location.href);
-    if (value) url.searchParams.set(key, value);
-    else url.searchParams.delete(key);
-    if (key !== "page") url.searchParams.delete("page");
-    window.location.href = url.toString();
+    const next = new URLSearchParams(query);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    if (key !== "page") next.delete("page");
+    navigate("/browse", Object.fromEntries(next));
   }
 
   const media = results?.Page.media ?? [];
@@ -101,8 +104,6 @@ function BrowseInner() {
 
   return (
     <div className="page">
-      <Nav />
-
       <div className="page-head">
         <h1>
           <FilterIcon width={24} height={24} style={{ verticalAlign: "-4px", marginRight: 8 }} />
@@ -129,22 +130,18 @@ function BrowseInner() {
           <SearchIcon width={20} height={20} />
           <input
             className="browse-input"
-            defaultValue={q}
+            value={searchText}
             placeholder="Search anime by title…"
+            onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setParam("q", (e.target as HTMLInputElement).value.trim());
-              }
+              if (e.key === "Enter") setParam("q", searchText.trim());
             }}
           />
-          <button className="search-btn" onClick={() => {
-            const el = document.querySelector(".browse-input") as HTMLInputElement | null;
-            setParam("q", el?.value.trim() || "");
-          }}>
+          <button className="search-btn" onClick={() => setParam("q", searchText.trim())}>
             Search
           </button>
           {q && (
-            <button className="chip" onClick={() => setParam("q", "")} title="Clear query">
+            <button className="chip" onClick={() => { setSearchText(""); setParam("q", ""); }} title="Clear query">
               ✕
             </button>
           )}
@@ -238,9 +235,7 @@ function BrowseInner() {
           >
             ← Prev
           </button>
-          <span className="page-info">
-            Page {page}
-          </span>
+          <span className="page-info">Page {page}</span>
           <button
             className="btn btn-ghost"
             disabled={!hasNext}
@@ -251,13 +246,5 @@ function BrowseInner() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function Browse() {
-  return (
-    <Suspense fallback={<div className="loader"><div className="spinner" /></div>}>
-      <BrowseInner />
-    </Suspense>
   );
 }

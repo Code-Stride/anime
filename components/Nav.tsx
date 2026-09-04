@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { hashHref, useRoute } from "@/lib/router";
 import { LogoIcon } from "./Icons";
 
 const links = [
@@ -12,33 +11,35 @@ const links = [
 ];
 
 export function Nav() {
-  const path = usePathname();
+  const { path } = useRoute();
 
   return (
     <header className="nav">
       <div className="nav-inner">
-        <Link href="/" className="brand">
+        <a href={hashHref("/")} className="brand">
           <span className="brand-icon">
             <LogoIcon />
           </span>
           Ani<span className="accent">Vault</span>
-        </Link>
+        </a>
 
         <nav className="nav-links">
           {links.map((l) => {
             const active =
               l.href === "/"
                 ? path === "/"
-                : path.startsWith(l.href);
+                : l.href.startsWith("/genre/")
+                ? path.startsWith("/genre/")
+                : path === l.href;
             return (
-              <Link
+              <a
                 key={l.href}
-                href={l.href}
+                href={hashHref(l.href)}
                 className={`nav-link${active ? " on" : ""}`}
                 style={active ? { color: "var(--text)", background: "var(--bg-3)" } : undefined}
               >
                 {l.label}
-              </Link>
+              </a>
             );
           })}
         </nav>

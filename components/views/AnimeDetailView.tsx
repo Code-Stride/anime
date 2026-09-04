@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import type { Title } from "@/lib/anilist";
 import { animeql, DETAIL_QUERY } from "@/lib/anilist";
-import { Nav } from "@/components/Nav";
+import { hashHref } from "@/lib/router";
 import { Loader, ErrorBox } from "@/components/Skeleton";
 import {
   BackIcon,
@@ -27,7 +25,6 @@ import {
   hexToRgba,
   relationLabel,
   resolveBanner,
-  resolveCover,
   romajiTitle,
   scoreLabel,
   seasonYear,
@@ -64,11 +61,11 @@ type DetailData = {
     nextAiringEpisode?: { episode: number | null; airingAt: number | null; timeUntilAiring: number | null } | null;
     trailer?: Trailer | null;
     studios?: { nodes?: { id: number; name: string }[] } | null;
-    tags?: { name: string; rank: number; isMediaSpoiler: boolean; isGeneralSpoiler: boolean }[] | null;
+    tags?: { name: string; rank: number }[] | null;
     relations?: {
       edges?: {
         relationType?: string | null;
-        node: { id: number; title: Title; coverImage: { medium?: string | null }; format?: string | null; averageScore?: number | null };
+        node: { id: number; title: Title; coverImage: { medium?: string | null }; format?: string | null };
       }[];
     } | null;
     characters?: {
@@ -98,10 +95,7 @@ function trailerUrl(t: Trailer | null | undefined): string | null {
   return null;
 }
 
-export default function AnimeDetail() {
-  const params = useParams();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-
+export function AnimeDetailView({ id }: { id: string }) {
   const [data, setData] = useState<DetailData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,19 +120,17 @@ export default function AnimeDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (data?.Media) document.title = `${displayTitle(data.Media.title)} · AniVault`;
+  }, [data]);
+
   if (loading) {
-    return (
-      <div className="page">
-        <Nav />
-        <Loader label="Loading title…" />
-      </div>
-    );
+    return <Loader label="Loading title…" />;
   }
 
   if (error) {
     return (
       <div className="page">
-        <Nav />
         <div className="page-head">
           <h1>Something went wrong</h1>
         </div>
@@ -150,7 +142,6 @@ export default function AnimeDetail() {
   if (!data?.Media) {
     return (
       <div className="page">
-        <Nav />
         <div className="empty">
           <h3>Title not found</h3>
           <p>This anime may have been removed or the id is invalid.</p>
@@ -165,13 +156,11 @@ export default function AnimeDetail() {
   const cover = m.coverImage?.extraLarge || m.coverImage?.large || m.coverImage?.medium;
   const banner = resolveBanner(m);
   const score = scoreLabel(m.averageScore);
-  const year = m.seasonYear || m.startDate?.year;
   const fm = formatLabel(m.format as never);
   const st = statusLabel(m.status as never);
   const season = seasonYear(m as never);
   const accent = m.coverImage?.color || "#6d5bff";
   const trailing = trailerUrl(m.trailer);
-
   const characters = m.characters?.edges || [];
   const relations = m.relations?.edges || [];
   const recs = m.recommendations?.nodes || [];
@@ -180,13 +169,11 @@ export default function AnimeDetail() {
 
   return (
     <div className="page">
-      <Nav />
-
       <div style={{ paddingTop: 16 }}>
-        <Link href="/browse" className="chip">
+        <a className="chip" href={hashHref("/browse")}>
           <BackIcon width={15} height={15} style={{ verticalAlign: "text-bottom", marginRight: 4 }} />
           Back to browse
-        </Link>
+        </a>
       </div>
 
       <div className="detail-hero">
@@ -253,12 +240,7 @@ export default function AnimeDetail() {
             <div className="detail-actions">
               <button
                 className="btn btn-primary"
-                onClick={() => {
-                  const url = typeof window !== "undefined"
-                    ? `https://anilist.co/anime/${m.id}`
-                    : "#";
-                  window.open(url, "_blank", "noopener");
-                }}
+                onClick={() => window.open(`https://anilist.co/anime/${m.id}`, "_blank", "noopener")}
               >
                 View on AniList
                 <ExternalIcon width={15} height={15} />
@@ -290,9 +272,9 @@ export default function AnimeDetail() {
             {m.genres?.length > 0 && (
               <div className="detail-genres genres">
                 {m.genres.map((g) => (
-                  <Link key={g} href={`/genre/${encodeURIComponent(g)}`} className="chip">
+                  <a key={g} href={hashHref(`/genre/${encodeURIComponent(g)}`)} className="chip">
                     {g}
-                  </Link>
+                  </a>
                 ))}
               </div>
             )}
@@ -375,7 +357,7 @@ export default function AnimeDetail() {
           </div>
           <div className="rel-grid">
             {relations.map((r) => (
-              <Link key={r.node.id} href={`/anime/${r.node.id}`} className="rel-card">
+              <a key={r.node.id} href={hashHref(`/anime/${r.node.id}`)} className="rel-card">
                 {r.node.coverImage?.medium && (
                   <Image src={r.node.coverImage.medium} alt={displayTitle(r.node.title)} width={46} height={66} />
                 )}
@@ -386,7 +368,7 @@ export default function AnimeDetail() {
                     {r.node.format ? ` · ${formatLabel(r.node.format as never)}` : ""}
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>
@@ -399,7 +381,7 @@ export default function AnimeDetail() {
           </div>
           <div className="rel-grid">
             {recs.map((r) => (
-              <Link key={r.mediaRecommendation.id} href={`/anime/${r.mediaRecommendation.id}`} className="rel-card">
+              <a key={r.mediaRecommendation.id} href={hashHref(`/anime/${r.mediaRecommendation.id}`)} className="rel-card">
                 {r.mediaRecommendation.coverImage?.medium && (
                   <Image src={r.mediaRecommendation.coverImage.medium} alt={displayTitle(r.mediaRecommendation.title)} width={46} height={66} />
                 )}
@@ -410,7 +392,7 @@ export default function AnimeDetail() {
                     {r.mediaRecommendation.averageScore ? ` · ${scoreLabel(r.mediaRecommendation.averageScore)}★` : ""}
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>

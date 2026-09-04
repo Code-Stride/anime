@@ -25,15 +25,19 @@ rightholders or their authorized distributors — I can help you point users at
 legal regional services (Crunchyroll, Netflix, Prime Video, Muse India,
 Disney+ Hotstar, etc.), but I won't build a wrapper around unauthorized content.
 
-## Pages
+## Pages (hash-routed SPA)
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Home — trending & top-rated anime |
-| `/browse` | Full catalog with search + filters (genre, format, season, year, status, sort) |
-| `/trending` | Currently trending anime |
-| `/genre/[genre]` | Anime filtered by a single genre |
-| `/anime/[id]` | Detail page — synopsis, stats, cast, studios, related titles, trailer |
+Because the app is a fully client-side Next.js static export (built for
+GitHub Pages), routing is driven by the URL hash — so there are **no server
+routes** and it works on a static host with zero configuration.
+
+| View | URL (hash) | Purpose |
+|------|------------|---------|
+| Home | `#/` | Trending & top-rated anime |
+| Browse | `#/browse` | Full catalog with search + filters (genre, format, season, year, status, sort) |
+| Trending | `#/trending` | Currently trending anime |
+| Genre | `#/genre/Action` | Anime filtered by a single genre |
+| Detail | `#/anime/113415` | Synopsis, stats, cast, studios, related titles, trailer |
 
 ## Tech
 
@@ -50,21 +54,40 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-Production:
+## Deploy to GitHub Pages
+
+This is a **static export** (`output: 'export'` in `next.config.mjs`), so it
+deploys straight to GitHub Pages — no server needed. A workflow is included at
+`.github/workflows/deploy-pages.yml`.
+
+1. Push to **`main`** (or run the "Deploy to GitHub Pages" workflow manually
+   from the Actions tab).
+2. In **Settings → Pages**, set the source to **GitHub Actions** (the workflow
+   auto-enables it with `enablement: true`).
+3. Done — the site is served at `https://<user>.github.io/<repo>/`.
+
+The workflow computes `NEXT_PUBLIC_BASE_PATH` from the repo name so asset paths
+are correct for project pages (`/repo/`). For a user/org site
+(`<user>.github.io`) the base path is left empty automatically.
+
+To build the static export locally:
 
 ```bash
 npm run build
-npm run start
+# output goes to ./out  (serve it with any static server)
 ```
 
 ## Project structure
 
 ```
-lib/anilist.ts      # GraphQL queries + types + filter option metadata
-lib/format.ts       # display helpers (titles, scores, seasons, dates)
-components/         # Nav, MediaCard, BannerCard, AnimeGrid, Skeleton, Icons
-app/                # App Router pages (/, /browse, /trending, /genre/*, /anime/*)
-app/globals.css     # design system
+lib/anilist.ts        # GraphQL queries + types + filter option metadata
+lib/format.ts         # display helpers (titles, scores, seasons, dates)
+lib/router.ts         # hash router (parseHash, useRoute, navigate)
+components/           # Nav, MediaCard, BannerCard, AnimeGrid, Skeleton, Icons
+components/views/     # HomeView, BrowseView, TrendingView, GenreView, AnimeDetailView
+app/                  # App Router shell (single SPA entry that routes by hash)
+app/globals.css       # design system
+.github/workflows/    # GitHub Pages deploy workflow
 ```
 
 ## Notes
