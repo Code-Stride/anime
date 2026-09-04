@@ -62,13 +62,25 @@ deploys straight to GitHub Pages — no server needed. A workflow is included at
 
 1. Push to **`main`** (or run the "Deploy to GitHub Pages" workflow manually
    from the Actions tab).
-2. In **Settings → Pages**, set the source to **GitHub Actions** (the workflow
-   auto-enables it with `enablement: true`).
+2. Nothing to configure: the workflow runs `actions/configure-pages` with
+   `enablement: true`, which turns Pages on and sets the source to **GitHub
+   Actions** on a fresh repo.
 3. Done — the site is served at `https://<user>.github.io/<repo>/`.
 
 The workflow computes `NEXT_PUBLIC_BASE_PATH` from the repo name so asset paths
 are correct for project pages (`/repo/`). For a user/org site
 (`<user>.github.io`) the base path is left empty automatically.
+
+### Why it publishes an artifact, not a `gh-pages` branch
+
+The Pages site is configured with `build_type: workflow` (Settings → Pages →
+Source: *GitHub Actions*). In that mode GitHub **only** serves the artifact
+uploaded by `actions/deploy-pages` and ignores a `gh-pages` branch completely —
+so a branch-publishing deploy reports success while the URL serves a bare
+`404 "There isn't a GitHub Pages site here."`. The build job uploads `./out`
+with `actions/upload-pages-artifact` and the deploy job publishes it with
+`actions/deploy-pages`; keep it that way unless you also switch the Pages
+source back to "Deploy from a branch".
 
 To build the static export locally:
 
