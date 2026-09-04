@@ -1,21 +1,34 @@
 name: Deploy to GitHub Pages
 
+# Builds the static Next.js export and publishes it to GitHub Pages using the
+# official Pages actions (upload artifact -> deploy artifact).
+#
+# This repository's Pages site is configured with `build_type: workflow`
+# (Settings -> Pages -> Source: "GitHub Actions"). In that mode GitHub *only*
+# serves artifacts uploaded by actions/deploy-pages; a `gh-pages` branch is
+# ignored completely. Publishing to a branch instead leaves the site serving
+# nothing at all (a bare "Site not found" 404), which is what this workflow
+# used to do — keep it on the artifact flow.
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
+# `pages: write` lets configure-pages enable the site and deploy-pages publish
+# to it; `id-token: write` is required for the OIDC token deploy-pages uses to
+# authenticate, so no stored PAT is needed.
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
+# Allow one concurrent deployment at a time, but never cancel one in flight.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,8 +40,25 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Set base path
-        run: echo "NEXT_PUBLIC_BASE_PATH=/anime" >> "$GITHUB_ENV"
+      - name: Configure GitHub Pages
+        # enablement turns Pages on (and switches the source to GitHub Actions)
+        # if that has not happened yet, so a fresh clone of this repo deploys
+        # without a manual trip to Settings -> Pages.
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Set asset base path
+        # Project pages are served from /<repo>/ so Next must prefix every
+        # asset with it; user/org pages (<user>.github.io) are served from /.
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          if [ "${repo,,}" = "${owner}.github.io" ]; then
+            echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
+          else
+            echo "NEXT_PUBLIC_BASE_PATH=/${repo}" >> "$GITHUB_ENV"
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -36,14 +66,19 @@ jobs:
       - name: Build static export
         run: npm run build
 
-      - name: Configure git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          branch: gh-pages
+          # `output: 'export'` in next.config.mjs emits the site to ./out.
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
